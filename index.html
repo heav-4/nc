@@ -227,6 +227,10 @@
 					board.win = turn;
 					canturn = false;
 				}
+				if (!won && Object.keys(board).length==65) {
+					board.win = "tie";
+					canturn = false;
+				}
 				record(board);
 				if (turn=="x") set_turn("o"); else set_turn("x");
 				render();
@@ -238,13 +242,16 @@
 				if (p=="o"){
 					bar.classList.remove("x")
 					bar.classList.add("o")
-				} else {
+				} else if (p=="x") {
 					bar.classList.remove("o")
 					bar.classList.add("x")
 				}
 			}
 			function statusbar(){
 				function name(x){
+					if (x=="tie"){
+						return "No-one";
+					}
 					if (x=="x"){
 						if (players[0]=="") return "Magenta";
 						return players[0];
@@ -315,14 +322,16 @@
 			
 			function save(){
 				boardhistory.players = players;
-				for (let p in players){
-					let po = players[p];
-					if (po!=""){
-						profile.players[po] = profile.players[po] || {wins:0,losses:0}
-						if (p==0) {
-							if (board.win=="x") profile.players[po].wins++; else profile.players[po].losses++;
-						} else {
-							if (board.win=="o") profile.players[po].wins++; else profile.players[po].losses++;
+				if (board.win != "tie"){
+					for (let p in players){
+						let po = players[p];
+						if (po!=""){
+							profile.players[po] = profile.players[po] || {wins:0,losses:0}
+							if (p==0) {
+								if (board.win=="x") profile.players[po].wins++; else profile.players[po].losses++;
+							} else {
+								if (board.win=="o") profile.players[po].wins++; else profile.players[po].losses++;
+							}
 						}
 					}
 				}
