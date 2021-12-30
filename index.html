@@ -66,14 +66,69 @@
 				color: lime;
 				font-weight: bold;
 			}
+			@keyframes win {
+				from {background:yellow}
+				to {background:black}
+			}
+			.win {
+				background: black;
+				animation-name: win;
+				animation-duration: 1s;
+			}
+			button {
+				background-color:#333;
+				color: lime;
+				font-weight:bold;
+				font: monospace;
+				margin-right: 1vh;
+			}
+			#controls {
+				width: 90%;
+				margin-left: auto;
+				margin-right: auto;
+				border: 1px solid black;
+				background-color: grey;
+			}
+			.disable {
+				pointer-events: none;
+				background-color:#444;
+				color: grey;	
+			}
+			input {
+				background-color:#666;
+				border: 1px solid white;
+				width:5%;
+				font-family: monospace;
+				color: lime;
+				margin-right: 1vh;
+			}
 		</style>
 	</head>
 	<body>
-		<div id = board />
+		<div id = board></div>
+		<div id = controls>
+			<button id = resetbtn onclick = reset()>Reset</button><button id = savebtn onclick = save()>Save & Reset</button><button id = savebtn onclick = setprofile(document.getElementById('profileinp').value)>Set profile</button><input id=profileinp></input><button id = p1btn onclick = setplayer(0,document.getElementById('p1inp').value)>Set as magenta</button><input id=p1inp></input><button id = p1btn onclick = setplayer(1,document.getElementById('p2inp').value)>Set as green</button><input id=p2inp></input><button id = swapbtn onclick = swapplayers()>Swap</button>
+		</div>
 		<script>
 			let board = {};
-			let boardhistory = {};
+			let boardhistory;
+			function resethistory(){
+				boardhistory = {turns:[]};
+			}
+			resethistory();
 			let turn = "x";
+			let players = [document.getElementById("p1inp").value,document.getElementById("p2inp").value]
+			function setplayer(n,name){
+				players[n] = name;
+			}
+			function swapplayers(){
+				let tmp = players[0];
+				let tmpv = document.getElementById("p1inp").value;
+				players[0] = players[1];
+				document.getElementById("p1inp").value = document.getElementById("p2inp").value;
+				players[1] = tmp;
+				document.getElementById("p2inp").value = tmpv;
+			}
 			board.turn = "x";
 			function clone(b){
 				let res = {}
@@ -82,6 +137,32 @@
 				}
 				return res;
 			}
+			function record(b){
+				boardhistory.turns.push(clone(b))
+			}
+			let profile = {};
+			let profilename = document.getElementById("profileinp").value;
+			loadprofile(profilename);
+			function loadprofile(x){
+				try {
+					profile = JSON.parse(localStorage["profile_"+x]);
+					profile.games = profile.games || [];
+					profile.players = profile.players || {};
+				}
+				catch {localStorage["profile_"+x] = "{}"; loadprofile(x)};
+			}
+			function saveprofile(x){
+				localStorage["profile_"+x] = JSON.stringify(profile);
+			}
+			function setprofile(x){
+				saveprofile(profilename);
+				profilename = x;
+				loadprofile(profilename);
+				document.getElementById("p1inp").value = "";
+				document.getElementById("p2inp").value = "";
+				reset();
+			}
+			record(board);
 			function get(x,y,z){
 				return board[x+" "+y+" "+z] || false
 			}
@@ -142,6 +223,7 @@
 					board.win = turn;
 					canturn = false;
 				}
+				record(board);
 				if (turn=="x") set_turn("o"); else set_turn("x");
 				render();
 			}
@@ -161,10 +243,14 @@
 				let bar = document.getElementById("statusbar");
 				let bturnname = board.turn=="o"?"Green":"Magenta"
 				let turnname = turn=="o"?"Green":"Magenta"
+				bar.innerText = "";
+				bar.innerText += "Game "+(profile.games.length+1)+", turn "+boardhistory.turns.length+":";
 				if (!board.win) {
-					bar.innerText = turnname+"'s turn...";
+					bar.innerText += " "+turnname+"'s turn...";
+					bar.classList.remove("win")
 				} else {
-					bar.innerText = (board.win=="o"?"Green":"Magenta")+" wins!";
+					bar.innerText += " "+(board.win=="o"?"Green":"Magenta")+" wins!";
+					bar.classList.add("win")
 				}
 			}
 			function renderinit(){
@@ -182,7 +268,13 @@
 				}
 				res = res + "</div>"
 				document.getElementById("board").innerHTML = res;
-				statusbar();
+				render()
+			}
+			function disable(id){
+				document.getElementById(id).classList.add("disable");
+			}
+			function enable(id){
+				document.getElementById(id).classList.remove("disable");
 			}
 			function render(){
 				for (let x=0;x<4;x++){
@@ -198,8 +290,36 @@
 					}
 				}
 				statusbar();
+				if (board.win) enable("savebtn"); else disable("savebtn");
 			}
 			renderinit();
+			
+			function reset(){
+				board = {};
+				resethistory();
+				set_turn("x");
+				record(board);
+				renderinit()
+				canturn = true;
+			}
+			
+			function save(){
+				boardhistory.players = players;
+				for (let p in players){
+					let po = players[p];
+					if (po!=""){
+						profile.players[po] = profile.players[po] || {wins:0,losses:0}
+					}
+					if (p==0) {
+						if (board.win=="x") profile.players[po].wins++; else profile.players[po].losses++;
+					} else {
+						if (board.win=="o") profile.players[po].wins++; else profile.players[po].losses++;
+					}
+				}
+				profile.games.push(boardhistory);
+				saveprofile(profilename);
+				reset()
+			}
 		</script>
 	</body>
 </html>
