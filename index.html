@@ -319,11 +319,11 @@
 					let po = players[p];
 					if (po!=""){
 						profile.players[po] = profile.players[po] || {wins:0,losses:0}
-					}
-					if (p==0) {
-						if (board.win=="x") profile.players[po].wins++; else profile.players[po].losses++;
-					} else {
-						if (board.win=="o") profile.players[po].wins++; else profile.players[po].losses++;
+						if (p==0) {
+							if (board.win=="x") profile.players[po].wins++; else profile.players[po].losses++;
+						} else {
+							if (board.win=="o") profile.players[po].wins++; else profile.players[po].losses++;
+						}
 					}
 				}
 				profile.games.push(boardhistory);
