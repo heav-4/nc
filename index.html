@@ -120,6 +120,7 @@
 			let players = [document.getElementById("p1inp").value,document.getElementById("p2inp").value]
 			function setplayer(n,name){
 				players[n] = name;
+				render()
 			}
 			function swapplayers(){
 				let tmp = players[0];
@@ -128,6 +129,7 @@
 				document.getElementById("p1inp").value = document.getElementById("p2inp").value;
 				players[1] = tmp;
 				document.getElementById("p2inp").value = tmpv;
+				render();
 			}
 			board.turn = "x";
 			function clone(b){
@@ -141,6 +143,7 @@
 				boardhistory.turns.push(clone(b))
 			}
 			let profile = {};
+			if (document.getElementById("profileinp").value=="") document.getElementById("profileinp").value = "default";
 			let profilename = document.getElementById("profileinp").value;
 			loadprofile(profilename);
 			function loadprofile(x){
@@ -160,6 +163,7 @@
 				loadprofile(profilename);
 				document.getElementById("p1inp").value = "";
 				document.getElementById("p2inp").value = "";
+				players = [document.getElementById("p1inp").value,document.getElementById("p2inp").value]
 				reset();
 			}
 			record(board);
@@ -240,16 +244,22 @@
 				}
 			}
 			function statusbar(){
+				function name(x){
+					if (x=="x"){
+						if (players[0]=="") return "Magenta";
+						return players[0];
+					}
+					if (players[1]=="") return "Green";
+					return players[1];
+				}
 				let bar = document.getElementById("statusbar");
-				let bturnname = board.turn=="o"?"Green":"Magenta"
-				let turnname = turn=="o"?"Green":"Magenta"
 				bar.innerText = "";
 				bar.innerText += "Game "+(profile.games.length+1)+", turn "+boardhistory.turns.length+":";
 				if (!board.win) {
-					bar.innerText += " "+turnname+"'s turn...";
+					bar.innerText += " "+name(turn)+(name(turn)[name(turn).length-1]=="s"?"' ":"'s")+" turn...";
 					bar.classList.remove("win")
 				} else {
-					bar.innerText += " "+(board.win=="o"?"Green":"Magenta")+" wins!";
+					bar.innerText += " "+name(board.win)+" wins!";
 					bar.classList.add("win")
 				}
 			}
