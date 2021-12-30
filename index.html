@@ -1,0 +1,166 @@
+<html>
+	<head>
+		<title>4x4x4 N+C</title>
+		<style>
+			.layer {
+				width:fit-content;
+				height:fit-content;
+				border: 1px solid grey;
+				margin-left:1vw;
+				margin-right:1vw;
+				display:inline-block;
+			}
+			.row {
+				width:fit-content;
+				height:fit-content;
+				display:inline-block;
+			}
+			.cell {
+				background:white;
+				width:5vw;
+				height:5vw;
+				border: 1px solid gray;
+				transition: background;
+				display: inline-block;
+				cursor: cell;
+			}
+			@keyframes magentize {
+				from {background:white}
+				to {background:magenta}
+			}
+			@keyframes greenize {
+				from {background:white}
+				to {background:green}
+			}
+			.x {
+				background:magenta;
+				animation-name: magentize;
+				animation-duration: 0.5s;
+			}
+			.o {
+				background:green;
+				animation-name: greenize;
+				animation-duration: 0.5s;
+			}
+			#board {
+				width: fit-content;
+				height: fit-content;
+				padding:1vw;
+				border: 2px solid black;
+				margin-left: auto;
+				margin-right: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<div id = board />
+		<script>
+			let board = {};
+			let boardhistory = {};
+			let turn = "x";
+			function clone(b){
+				let res = {}
+				for (let m in b){
+					res[m] = b[m]
+				}
+				return res;
+			}
+			function get(x,y,z){
+				return board[x+" "+y+" "+z] || false
+			}
+			function set(x,y,z,s){
+				board[x+" "+y+" "+z] = s; 
+			}
+			function inbounds(x,y,z){
+				if (x<0) return false;
+				if (y<0) return false;
+				if (z<0) return false;
+				if (x>3) return false;
+				if (y>3) return false;
+				if (z>3) return false;
+				return true;
+			}
+			
+			const winlength = 4;
+			let napkin = [];
+			for (let x=-1;x<2;x++)
+				for (let y=-1;y<2;y++)
+					for (let z=-1;z<2;z++)
+						if (x!=0||y!=0||z!=0) napkin.push([x,y,z])
+			
+			function checkwin(x,y,z){
+				function checkwinr(s,x,y,z,dx,dy,dz){
+					let state_at = get(x,y,z);
+					if (!(state_at && state_at == s)) return 0;
+					let n = 1;
+					let to_try = [];
+					if (dx==0&&dy==0&&dz==0){
+						for (let i=0;i<napkin.length;i++){
+							let d = napkin[i];
+							to_try.push(d);
+						}
+					} else {
+						to_try = [[dx,dy,dz]];
+					}
+					for (let i in to_try){
+						let t = to_try[i];
+						let n1 = 0;
+						if (-dx!=t[0]||-dy!=t[1]||-dz!=t[2]) n1 += checkwinr(s,x+t[0],y+t[1],z+t[2],t[0],t[1],t[2]);
+						if (dx!=t[0]||dy!=t[1]||dz!=t[2]) {
+							n1 += checkwinr(s,x-t[0],y-t[1],z-t[2],-t[0],-t[1],-t[2]);
+						}
+						if (n1+1 > n) n = n1+1;
+					}
+					return n;
+				}
+				return checkwinr(get(x,y,z),x,y,z,0,0,0) >= winlength;
+			}
+			let canturn = true;
+			function tryturn(x,y,z){
+				if (!canturn) return;
+				if (get(x,y,z)) return;
+				set(x,y,z,turn);
+				let won = checkwin(x,y,z);
+				render();
+				if (won) {
+					alert((turn=="x"?"Magenta":"Green")+" wins!");
+					canturn = false;
+					return;
+				}
+				
+				if (turn=="x") turn="o"; else turn="x";
+			}
+			
+			function renderinit(){
+				let res = "";
+				for (let z=0;z<4;z++){
+					res += "<div class=layer>";
+					for (let y=0;y<4;y++){
+						res += "<div class=row>";
+						for (let x=0;x<4;x++){
+							res += "<div id="+x+y+z+" class='cell"+(get(x,y,z)?" "+get(x,y,z):"")+"' onclick = 'tryturn("+x+","+y+","+z+")'></div>";
+						}
+						res += "</div><br/>"
+					}
+					res += "</div>"
+				}
+				document.getElementById("board").innerHTML = res;
+			}
+			function render(){
+				for (let x=0;x<4;x++){
+					for (let y=0;y<4;y++){
+						for (let z=0;z<4;z++){
+							let c = document.getElementById(""+x+y+z).classList;
+							let s = get(x,y,z)
+							if (s!="x") c.remove("x");
+							if (s!="o") c.remove("o");
+							if (s=="x") c.add("x");
+							if (s=="o") c.add("o");
+						}
+					}
+				}
+			}
+			renderinit();
+		</script>
+	</body>
+</html>
